@@ -1,2 +1,6 @@
 *.o
 *~
+alex.c
+asin.c
+cmc
+include/asin.h
