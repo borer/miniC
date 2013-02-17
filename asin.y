@@ -1,20 +1,44 @@
 %{
 	#include <stdio.h>
+	#include "header.h"
+	#include "libtds.h"
 	/*extern int yylineno;*/
 %}
 
 %error-verbose
 
-%token ID_ PC_ CTE_ INT_ STRUCT_ COMA_
+%union
+{
+	/* Tipo para almacenar el lexema de un identificador */
+	char *ident;
+
+	/* el valor de una constante numérica entera */
+	int cent;
+}
+
+%token PC_ INT_ STRUCT_ COMA_
 %token IF_ ELSE_ WHILE_ RETURN_
 %token PARABR_ PARCER_ CORABR_ CORCER_ LLAVABR_ LLAVCER_
 %token PRINT_ READ_
 %token ASIG_  MENOR_ MAYOR_ IGUALDOBLE_ MAYORIGUAL_ MENORIGUAL_ NEGACION_ 
 %token MAS_ DMAS_ MENOS_ DMENOS_ DIV_ MULT_
 
+%token <ident> ID_
+%token <cent> CTE_
+
 %%
 
-Programa: secuenciaDeclaraciones;
+Programa: {	contexto = GLOBAL; cargaContexto(contexto); dvar = 0;} 
+
+		secuenciaDeclaraciones 
+
+		{ 
+			if (verTDS) {
+				mostrarTDS(contexto);
+			}
+			
+			descargaContexto(contexto); 
+		};
 
 secuenciaDeclaraciones: declaracion
 	| secuenciaDeclaraciones declaracion;
@@ -22,12 +46,58 @@ secuenciaDeclaraciones: declaracion
 declaracion: declaracionVariable
 	| declaracionFuncion;
 
-declaracionVariable: INT_ ID_ PC_
-	| INT_ ID_ CORABR_ CTE_ CORCER_ PC_;
-	
-declaracionFuncion: cabeceraFuncion bloque;
+declaracionVariable: INT_ ID_ PC_  
+		{
+			char *name = $2; 
+			insertaSimbolo(name, VARIABLE, T_ENTERO, dvar, contexto, -1);
+			dvar = dvar + TALLA_ENTERO;
+		}
 
-cabeceraFuncion: INT_ ID_ PARABR_ parametrosFormales PARCER_;
+	| INT_ ID_ CORABR_ CTE_ CORCER_ PC_ 
+		{
+			int array_info;
+			char *name = $2;
+			int num_elem = $4;
+
+			if (num_elem <= 0) {
+				yyerror("Talla inapropiada del array ");
+				num_elem = 0;
+			}
+
+			array_info = insertaInfoArray(T_ENTERO,num_elem);
+			if (!insertaSimbolo(name, VARIABLE, T_ARRAY, dvar, contexto, array_info)) {
+				yyerror ("Identificador repetido");
+			}
+			dvar += TALLA_ENTERO * num_elem;
+		};
+	
+declaracionFuncion: cabeceraFuncion bloque 
+		{
+			if (verTDS) {
+				mostrarTDS(contexto);
+			}
+
+			descargaContexto(contexto);
+			contexto = GLOBAL;
+			dvar=old_dvar; 
+		};
+
+cabeceraFuncion: INT_ ID_ PARABR_ parametrosFormales PARCER_ 
+		{
+			char *name = $2;
+			int  dominio_info=-1;
+
+			contexto=LOCAL;
+			cargaContexto(contexto);
+
+			//////////////////////////////////Why we declare the function on level LOCAL
+			if (!insertaSimbolo(name, FUNCION, T_ENTERO, -1, contexto, dominio_info)) {
+				yyerror ("Identificador de funcion repetido");
+			}
+
+			old_dvar=dvar;
+			dvar=0 ;
+		};
 
 parametrosFormales: | listaParametrosFormales;
 	

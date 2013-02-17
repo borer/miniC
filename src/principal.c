@@ -7,6 +7,7 @@
 #include "header.h"
 int verbosidad=FALSE;               /* Flag para saber si se desea una traza */
 int numErrores=0;                   /* Contador del numero de errores        */
+int verTDS = 1;
 /*****************************************************************************/
 void yyerror(const char * msg)
 /*  Tratamiento de errores.                                                  */

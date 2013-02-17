@@ -27,6 +27,7 @@ extern int numErrores; /* Contador del numero de errores */
 extern int verTDS;     /* Flag para saber si mostrar la TDS */
 /*************************** Variables externas definidas en las librer las ***/
 extern int dvar;       /* Desplazamiento relativo en el Segmento de Variables */
+int old_dvar;
 /**************** Variables globales propias de uso en todo el compilador ****/
 int contexto;          /* Contexto (global o local) de las variables */
 
