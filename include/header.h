@@ -28,8 +28,16 @@ extern int verTDS;     /* Flag para saber si mostrar la TDS */
 /*************************** Variables externas definidas en las librer las ***/
 extern int dvar;       /* Desplazamiento relativo en el Segmento de Variables */
 int old_dvar;
+int dparam;				/* Desplazamiento relativo al Segmento de Parametros */
 /**************** Variables globales propias de uso en todo el compilador ****/
 int contexto;          /* Contexto (global o local) de las variables */
+
+/*My structs*/
+struct params {
+    int num_params;
+    int refDominio;
+};
+
 
 #endif  /* _HEADER_H */
 /*****************************************************************************/

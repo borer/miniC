@@ -14,6 +14,8 @@
 
 	/* el valor de una constante numérica entera */
 	int cent;
+
+	struct params params;
 }
 
 %token PC_ INT_ STRUCT_ COMA_
@@ -26,9 +28,11 @@
 %token <ident> ID_
 %token <cent> CTE_
 
+%type <params> listaParametrosFormales parametrosFormales
+
 %%
 
-Programa: {	contexto = GLOBAL; cargaContexto(contexto); dvar = 0;} 
+Programa: {contexto = GLOBAL; cargaContexto(contexto); dvar = 0;} 
 
 		secuenciaDeclaraciones 
 
@@ -82,27 +86,78 @@ declaracionFuncion: cabeceraFuncion bloque
 			dvar=old_dvar; 
 		};
 
-cabeceraFuncion: INT_ ID_ PARABR_ parametrosFormales PARCER_ 
+cabeceraFuncion: INT_ ID_  
 		{
-			char *name = $2;
-			int  dominio_info=-1;
-
 			contexto=LOCAL;
 			cargaContexto(contexto);
 
-			//////////////////////////////////Why we declare the function on level LOCAL
+			/*Make a copy of the global desp in order to restore when we exit the function*/
+			/*Also reset the desp counter for the function*/
+			old_dvar=dvar;
+			dvar=0 ;
+
+			/*Reset the counter for desp of parameters*/
+			dparam = TALLA_SEGENLACES;
+		}
+
+
+		PARABR_ parametrosFormales PARCER_
+
+
+		{
+			char *name = $2;
+			int  dominio_info = $5.refDominio; /*This is 5 instead of 4 because the {} block counts as 1 :)*/
+
+			/*Why we declare the function on level LOCAL*/
 			if (!insertaSimbolo(name, FUNCION, T_ENTERO, -1, contexto, dominio_info)) {
 				yyerror ("Identificador de funcion repetido");
 			}
 
-			old_dvar=dvar;
-			dvar=0 ;
 		};
 
-parametrosFormales: | listaParametrosFormales;
+parametrosFormales: 
+		{
+			/*The function has no params*/
+			$$.refDominio = insertaInfoDominio(-1,T_VACIO);
+			$$.num_params = 0;
+		}
+
+	| listaParametrosFormales 
+		{
+			/*Accumulate the sum of the number of params and pass it to the level above*/
+			$$.num_params = $1.num_params;
+			$$.refDominio = $1.refDominio;
+
+		};
 	
 listaParametrosFormales: INT_ ID_ 
-	| INT_ ID_ COMA_ listaParametrosFormales;
+		{
+
+			char *name = $2;
+
+			if (!insertaSimbolo(name, PARAMETRO, T_ENTERO, dparam, contexto, -dparam)) {
+				yyerror ("Identificador de parametro repetido");
+			}
+			dparam += TALLA_ENTERO;
+
+			/*Here we are at the end pf the parameter list*/
+			$$.num_params = 1;
+			$$.refDominio = insertaInfoDominio(-1,T_ENTERO);
+
+		}
+
+	| INT_ ID_ COMA_ listaParametrosFormales
+		{
+			char *name = $2;
+
+			if (!insertaSimbolo(name, PARAMETRO, T_ENTERO, dparam, contexto, -dparam)) {
+				yyerror ("Identificador de parametro repetido");
+			}
+			dparam += TALLA_ENTERO;
+
+			$$.num_params += 1 + $4.num_params;
+			$$.refDominio = insertaInfoDominio($4.refDominio,T_ENTERO);
+		};
 	
 bloque: LLAVABR_ declaracionVariableLocal listaInstrucciones RETURN_ expresion PC_ LLAVCER_;
 

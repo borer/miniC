@@ -1,7 +1,7 @@
 %{
 #include <stdio.h>
-#include "asin.h"
 #include "header.h"
+#include "asin.h"
 extern int verbosidad;
 #define MAX_LENGTH 14
 #define Devolver(x) if (verbosidad) ECHO; return x;
