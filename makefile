@@ -3,7 +3,7 @@
 #  edicion de enlaces de las distintas partes del proyecto.                   #
 #                         Jose Miguel Benedi, 2012-2013 <jbenedi@dsic.upv.es> #
 ###############################################################################
-CC_OPTIONS =-m32 -pedantic
+CC_OPTIONS =-pedantic
 CC_LIBRARY = -lfl -ltds
 CC_LINKS_FLAGS = $(CC_LIBRARY) $(CC_OPTIONS)
 OBJECTS = ./alex.o  ./asin.o ./principal.o 
